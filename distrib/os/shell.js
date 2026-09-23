@@ -1,3 +1,4 @@
+"use strict";
 /* ------------
    Shell.ts
 
@@ -44,6 +45,10 @@ var TSOS;
             this.commandList[this.commandList.length] = sc;
             // prompt <string>
             sc = new TSOS.ShellCommand(this.shellPrompt, "prompt", "<string> - Sets the prompt.");
+            this.commandList[this.commandList.length] = sc;
+            sc = new TSOS.ShellCommand(this.shellDate, "date", " - Displays the date and time");
+            this.commandList[this.commandList.length] = sc;
+            sc = new TSOS.ShellCommand(this.shellWhereAmI, "whereami", " - Displays current location");
             this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -243,6 +248,12 @@ var TSOS;
             else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
+        }
+        shellDate(args) {
+            _StdOut.putText(US_FORMAT.format(NOW));
+        }
+        shellWhereAmI(args) {
+            _StdOut.putText(LOCATION);
         }
     }
     TSOS.Shell = Shell;

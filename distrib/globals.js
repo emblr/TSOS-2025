@@ -1,3 +1,4 @@
+"use strict";
 /* ------------
    Globals.ts
 
@@ -10,12 +11,21 @@
 //
 // Global CONSTANTS (TypeScript 1.5 introduced const. Very cool.)
 //
-const APP_NAME = "TSOS"; // 'cause Bob and I were at a loss for a better name.
-const APP_VERSION = "0.07"; // What did you expect?
+const APP_NAME = "CR7OS"; // 'cause Bob and I were at a loss for a better name.
+const APP_VERSION = "7"; // What did you expect?
 const CPU_CLOCK_INTERVAL = 100; // This is in ms (milliseconds) so 1000 = 1 second.
 const TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
 // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ = 1;
+const NOW = new Date();
+const US_FORMAT = new Intl.DateTimeFormat("en-US", {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+});
+const LOCATION = "Winterfell";
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.

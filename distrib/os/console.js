@@ -1,3 +1,4 @@
+"use strict";
 /* ------------
      Console.ts
 
@@ -12,12 +13,16 @@ var TSOS;
         currentXPosition;
         currentYPosition;
         buffer;
-        constructor(currentFont = _DefaultFontFamily, currentFontSize = _DefaultFontSize, currentXPosition = 0, currentYPosition = _DefaultFontSize, buffer = "") {
+        history;
+        currentLine;
+        constructor(currentFont = _DefaultFontFamily, currentFontSize = _DefaultFontSize, currentXPosition = 0, currentYPosition = _DefaultFontSize, buffer = "", history = [], currentLine = "") {
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
             this.currentYPosition = currentYPosition;
             this.buffer = buffer;
+            this.history = history;
+            this.currentLine = currentLine;
         }
         init() {
             this.clearScreen();
@@ -25,6 +30,8 @@ var TSOS;
         }
         clearScreen() {
             _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
+            this.history = [];
+            this.currentLine = "";
         }
         resetXY() {
             this.currentXPosition = 0;
@@ -63,22 +70,37 @@ var TSOS;
             if (text !== "") {
                 // Draw the text at the current X and Y coordinates.
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
-                // Move the current X position.
-                var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+                let offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+                this.currentLine += text;
                 this.currentXPosition = this.currentXPosition + offset;
             }
         }
         advanceLine() {
+            this.history.push(this.currentLine);
+            this.currentLine = "";
             this.currentXPosition = 0;
             /*
              * Font size measures from the baseline to the highest point in the font.
              * Font descent measures from the baseline to the lowest point in the font.
              * Font height margin is extra spacing between the lines.
              */
-            this.currentYPosition += _DefaultFontSize +
-                _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
-                _FontHeightMargin;
-            // TODO: Handle scrolling. (iProject 1)
+            let offset = _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
+            let nextYPosition = this.currentYPosition + offset;
+            let rowY = this.currentFontSize;
+            if (nextYPosition >= _Canvas.height) {
+                //Scroll Later
+                this.clearScreen();
+                let linesPerScreen = Math.floor(_Canvas.height / offset);
+                let visibleLines = this.history.slice(-(linesPerScreen - 1));
+                for (let i = 0; i < visibleLines.length; i++) {
+                    _DrawingContext.drawText(this.currentFont, this.currentFontSize, 0, rowY, visibleLines[i]);
+                    rowY += offset;
+                }
+                this.currentYPosition = rowY;
+            }
+            else {
+                this.currentYPosition = nextYPosition;
+            }
         }
     }
     TSOS.Console = Console;
