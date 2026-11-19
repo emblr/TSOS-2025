@@ -95,12 +95,13 @@ module TSOS {
         public krnEnableInterrupts() {
             // Keyboard
             Devices.hostEnableKeyboardInterrupt();
-            // Put more here.
+            Devices.hostEnableScrollInterrupt();
         }
 
         public krnDisableInterrupts() {
             // Keyboard
             Devices.hostDisableKeyboardInterrupt();
+            Devices.hostDisableScrollInterrupt();
             // Put more here.
         }
 
@@ -120,6 +121,9 @@ module TSOS {
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case SCROLL_IRQ:
+                    _StdOut.scroll(params);
                     break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");

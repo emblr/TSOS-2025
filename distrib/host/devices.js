@@ -53,6 +53,33 @@ var TSOS;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(KEYBOARD_IRQ, params));
             }
         }
+        static hostEnableScrollInterrupt() {
+            document.addEventListener("wheel", Devices.hostOnWheel, { passive: false });
+        }
+        static hostDisableScrollInterrupt() {
+            document.removeEventListener("wheel", Devices.hostOnWheel, false);
+        }
+        static hostOnWheel(event) {
+            if (event.target.id === "display") {
+                event.preventDefault();
+                if (event.deltaY === 0) {
+                    return;
+                }
+                let params = [event.deltaY, event.deltaMode];
+                // A trackpad can generate many events between hardware ticks.
+                // Combine adjacent movements without crossing a keyboard interrupt
+                // or a direction change, preserving FIFO input ordering.
+                let pending = _KernelInterruptQueue.q;
+                let last = pending[pending.length - 1];
+                if (last && last.irq === SCROLL_IRQ &&
+                    last.params[1] === event.deltaMode &&
+                    Math.sign(last.params[0]) === Math.sign(event.deltaY)) {
+                    last.params[0] += event.deltaY;
+                    return;
+                }
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(SCROLL_IRQ, params));
+            }
+        }
     }
     TSOS.Devices = Devices;
 })(TSOS || (TSOS = {}));

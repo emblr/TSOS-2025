@@ -17,6 +17,7 @@ const CPU_CLOCK_INTERVAL = 100; // This is in ms (milliseconds) so 1000 = 1 seco
 const TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
 // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ = 1;
+const SCROLL_IRQ = 2;
 const NOW = new Date();
 const US_FORMAT = new Intl.DateTimeFormat("en-US", {
     year: 'numeric',

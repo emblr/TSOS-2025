@@ -58,5 +58,35 @@ module TSOS {
                 _KernelInterruptQueue.enqueue(new Interrupt(KEYBOARD_IRQ, params));
             }
         }
+
+        public static hostEnableScrollInterrupt(): void{
+            document.addEventListener("wheel", Devices.hostOnWheel, { passive: false });
+        }
+
+        public static hostDisableScrollInterrupt(): void{
+            document.removeEventListener("wheel", Devices.hostOnWheel, false);
+        }
+
+        public static hostOnWheel(event): void {
+            if(event.target.id === "display"){
+                event.preventDefault();
+                if (event.deltaY === 0) {
+                    return;
+                }
+                let params = [event.deltaY, event.deltaMode];
+                // A trackpad can generate many events between hardware ticks.
+                // Combine adjacent movements without crossing a keyboard interrupt
+                // or a direction change, preserving FIFO input ordering.
+                let pending = _KernelInterruptQueue.q;
+                let last = pending[pending.length - 1];
+                if (last && last.irq === SCROLL_IRQ &&
+                    last.params[1] === event.deltaMode &&
+                    Math.sign(last.params[0]) === Math.sign(event.deltaY)) {
+                    last.params[0] += event.deltaY;
+                    return;
+                }
+                _KernelInterruptQueue.enqueue(new Interrupt(SCROLL_IRQ, params));
+            }
+        }
     }
 }

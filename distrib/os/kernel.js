@@ -83,11 +83,12 @@ var TSOS;
         krnEnableInterrupts() {
             // Keyboard
             TSOS.Devices.hostEnableKeyboardInterrupt();
-            // Put more here.
+            TSOS.Devices.hostEnableScrollInterrupt();
         }
         krnDisableInterrupts() {
             // Keyboard
             TSOS.Devices.hostDisableKeyboardInterrupt();
+            TSOS.Devices.hostDisableScrollInterrupt();
             // Put more here.
         }
         krnInterruptHandler(irq, params) {
@@ -105,6 +106,9 @@ var TSOS;
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case SCROLL_IRQ:
+                    _StdOut.scroll(params);
                     break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
