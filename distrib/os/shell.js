@@ -54,7 +54,7 @@ var TSOS;
             // kill <id> - kills the specified process id.
             sc = new TSOS.ShellCommand(this.shellStatus, "status", "<message> - Sets the taskbar status.");
             this.commandList[this.commandList.length] = sc;
-            this.commandList.push(new TSOS.ShellCommand(this.shellLoad, "load", "- Validates the program input as hex digits and spaces."));
+            this.commandList.push(new TSOS.ShellCommand(this.shellLoad, "load", "- Loads hex program input into memory and returns a PID."));
             this.commandList.push(new TSOS.ShellCommand(this.shellBSOD, "bsod", "- Triggers a kernel error to test the blue screen."));
             this.commandList.push(new TSOS.ShellCommand(this.shellDirewolf, "direwolf", "[name] - Calls a direwolf to guard Winterfell."));
             // Display the initial prompt.
@@ -291,7 +291,22 @@ var TSOS;
                 _StdOut.putText("Invalid input: use only hex digits (0-9, A-F) and spaces.");
             }
             else {
-                _StdOut.putText("Valid program input: hex digits and spaces only.");
+                const hex = input.replace(/ /g, "");
+                if (hex.length % 2 !== 0) {
+                    _StdOut.putText("Invalid input: each byte needs two hex digits.");
+                    return;
+                }
+                const program = [];
+                for (let i = 0; i < hex.length; i += 2) {
+                    program.push(parseInt(hex.slice(i, i + 2), 16));
+                }
+                try {
+                    const process = _MemoryManager.load(program);
+                    _StdOut.putText("Loaded PID " + process.pid + " (" + program.length + " bytes).");
+                }
+                catch (error) {
+                    _StdOut.putText(error instanceof Error ? error.message : "Unable to load program.");
+                }
             }
         }
         shellBSOD(args) {
