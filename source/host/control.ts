@@ -112,6 +112,37 @@ module TSOS {
             location.reload();
         }
 
+        public static hostReadProgramInput(): string {
+            return (<HTMLTextAreaElement>document.getElementById("taProgramInput")).value;
+        }
+
+        public static hostShowBSOD(message: string): void {
+            _DrawingContext.save();
+            _DrawingContext.fillStyle = "#163b78";
+            _DrawingContext.fillRect(0, 0, _Canvas.width, _Canvas.height);
+            _DrawingContext.fillStyle = "#ffffff";
+            _DrawingContext.textAlign = "left";
+            _DrawingContext.textBaseline = "top";
+            _DrawingContext.font = "24px monospace";
+            _DrawingContext.fillText("THE WATCH HAS ENDED", 24, 40, _Canvas.width - 48);
+            _DrawingContext.font = "16px monospace";
+            _DrawingContext.fillText("StarkOS encountered a kernel error.", 24, 90, _Canvas.width - 48);
+            // The console overrides measureText, so wrap using monospace columns.
+            const columns = Math.max(1, Math.floor((_Canvas.width - 48) / 10));
+            const lines = message.match(new RegExp(".{1," + columns + "}", "g")) || [];
+            let y = 140;
+            for (const line of lines) {
+                if (y > _Canvas.height - 90) {
+                    break;
+                }
+                _DrawingContext.fillText(line, 24, y, _Canvas.width - 48);
+                y += 22;
+            }
+            _DrawingContext.fillText("Click Reset to restart the system.", 24, _Canvas.height - 50, _Canvas.width - 48);
+            _DrawingContext.restore();
+            _Canvas.setAttribute("aria-label", "StarkOS kernel error: " + message + ". Click Reset to restart.");
+        }
+
         public static hostUpdateTaskbar(): void{
             const clock = document.getElementById("taskbarClock");
             const status = document.getElementById("taskbarStatus");

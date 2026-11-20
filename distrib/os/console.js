@@ -16,6 +16,10 @@ var TSOS;
         history;
         currentLine;
         scrollOffset;
+        // Submitted commands are separate from the console's output scrollback.
+        commandHistory = [];
+        historyIndex = 0;
+        inputDraft = "";
         // scrollOffset measures pixels above the live bottom view.
         constructor(currentFont = _DefaultFontFamily, currentFontSize = _DefaultFontSize, currentXPosition = 0, currentYPosition = _DefaultFontSize, buffer = "", history = [], currentLine = "", scrollOffset = 0) {
             this.currentFont = currentFont;
@@ -50,11 +54,31 @@ var TSOS;
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
                 if (chr === String.fromCharCode(13)) { // the Enter key
+                    if (this.buffer.trim() !== "") {
+                        this.commandHistory.push(this.buffer);
+                    }
+                    this.historyIndex = this.commandHistory.length;
+                    this.inputDraft = "";
                     // The enter key marks the end of a console command, so ...
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
                     this.buffer = "";
+                    if (_Kernel.isShutdown) {
+                        return;
+                    }
+                }
+                else if (chr === String.fromCharCode(8)) { // Backspace
+                    this.backspace();
+                }
+                else if (chr === String.fromCharCode(9)) { // Tab
+                    this.completeCommand();
+                }
+                else if (chr === "ArrowUp") {
+                    this.recallCommand(-1);
+                }
+                else if (chr === "ArrowDown") {
+                    this.recallCommand(1);
                 }
                 else {
                     // This is a "normal" character, so ...
@@ -64,6 +88,57 @@ var TSOS;
                     this.buffer += chr;
                 }
                 // TODO: Add a case for Ctrl-C that would allow the user to break the current program.
+            }
+        }
+        recallCommand(direction) {
+            const nextIndex = Math.max(0, Math.min(this.commandHistory.length, this.historyIndex + direction));
+            if (nextIndex === this.historyIndex) {
+                return;
+            }
+            if (this.historyIndex === this.commandHistory.length) {
+                this.inputDraft = this.buffer;
+            }
+            this.historyIndex = nextIndex;
+            this.replaceInput(nextIndex === this.commandHistory.length
+                ? this.inputDraft
+                : this.commandHistory[nextIndex]);
+        }
+        backspace() {
+            // Only the input buffer is editable; never erase the prompt or output.
+            if (this.buffer.length === 0) {
+                return;
+            }
+            this.replaceInput(this.buffer.slice(0, -1));
+        }
+        replaceInput(text) {
+            // Preserve the existing prompt, including a customized prompt string.
+            this.currentLine = this.currentLine.slice(0, this.currentLine.length - this.buffer.length) + text;
+            this.buffer = text;
+            this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.currentLine);
+            this.scrollOffset = 0;
+            let lineHeight = this.currentFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
+            this.currentYPosition = this.redrawHistoryWindow(0, lineHeight);
+        }
+        completeCommand() {
+            // Complete the command word only; do not change its arguments.
+            const input = /^(\s*)(\S*)$/.exec(this.buffer);
+            if (!input) {
+                return;
+            }
+            const matches = _OsShell.getCommandMatches(input[2]);
+            if (matches.length === 1) {
+                this.replaceInput(input[1] + matches[0]);
+            }
+            else if (matches.length > 1) {
+                const savedInput = this.buffer;
+                this.buffer = "";
+                this.advanceLine();
+                for (const command of matches) {
+                    this.putText(command);
+                    this.advanceLine();
+                }
+                _OsShell.putPrompt();
+                this.replaceInput(savedInput);
             }
         }
         putText(text) {

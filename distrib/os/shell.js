@@ -54,13 +54,25 @@ var TSOS;
             // kill <id> - kills the specified process id.
             sc = new TSOS.ShellCommand(this.shellStatus, "status", "<message> - Sets the taskbar status.");
             this.commandList[this.commandList.length] = sc;
+            this.commandList.push(new TSOS.ShellCommand(this.shellLoad, "load", "- Validates the program input as hex digits and spaces."));
+            this.commandList.push(new TSOS.ShellCommand(this.shellBSOD, "bsod", "- Triggers a kernel error to test the blue screen."));
+            this.commandList.push(new TSOS.ShellCommand(this.shellDirewolf, "direwolf", "[name] - Calls a direwolf to guard Winterfell."));
             // Display the initial prompt.
             this.putPrompt();
+        }
+        getCommandMatches(prefix) {
+            return this.commandList
+                .map(command => command.command)
+                .filter(command => command.indexOf(prefix.toLowerCase()) === 0)
+                .sort();
         }
         putPrompt() {
             _StdOut.putText(this.promptStr);
         }
         handleInput(buffer) {
+            if (_Kernel.isShutdown) {
+                return;
+            }
             _Kernel.krnTrace("Shell Command~" + buffer);
             //
             // Parse the input...
@@ -109,6 +121,10 @@ var TSOS;
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
             fn(args);
+            // A shutdown or kernel trap must not print over the final screen.
+            if (_Kernel.isShutdown) {
+                return;
+            }
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
@@ -185,7 +201,6 @@ var TSOS;
             _StdOut.putText("Shutting down...");
             // Call Kernel shutdown routine.
             _Kernel.krnShutdown();
-            // TODO: Stop the final prompt from being displayed. If possible. Not a high priority. (Damn OCD!)
         }
         shellCls(args) {
             _StdOut.clearScreen();
@@ -262,6 +277,37 @@ var TSOS;
             else {
                 _StatusMessage = args.join(" ");
             }
+        }
+        shellLoad(args) {
+            if (args.length > 0) {
+                _StdOut.putText("Usage: load (reads the Program Input area)");
+                return;
+            }
+            const input = TSOS.Control.hostReadProgramInput();
+            if (input.trim() === "") {
+                _StdOut.putText("Program input is empty. Enter hex digits first.");
+            }
+            else if (/[^0-9a-fA-F ]/.test(input)) {
+                _StdOut.putText("Invalid input: use only hex digits (0-9, A-F) and spaces.");
+            }
+            else {
+                _StdOut.putText("Valid program input: hex digits and spaces only.");
+            }
+        }
+        shellBSOD(args) {
+            _Kernel.krnTrapError("Deliberate kernel trap from the bsod command.");
+        }
+        shellDirewolf(args) {
+            const name = args.length > 0 ? args.join(" ") : "Ghost";
+            _StdOut.putText(" /\\   /\\");
+            _StdOut.advanceLine();
+            _StdOut.putText("( o   o )");
+            _StdOut.advanceLine();
+            _StdOut.putText(" \\  ^  /");
+            _StdOut.advanceLine();
+            _StdOut.putText("  \\___/");
+            _StdOut.advanceLine();
+            _StdOut.putText(name + " stands watch over Winterfell.");
         }
     }
     TSOS.Shell = Shell;

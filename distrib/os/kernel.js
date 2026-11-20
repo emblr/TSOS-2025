@@ -10,6 +10,7 @@
 var TSOS;
 (function (TSOS) {
     class Kernel {
+        isShutdown = false;
         //
         // OS Startup and Shutdown Routines
         //
@@ -46,6 +47,8 @@ var TSOS;
             }
         }
         krnShutdown() {
+            this.isShutdown = true;
+            _CPU.isExecuting = false;
             this.krnTrace("begin shutdown OS");
             // TODO: Check for running processes.  If there are some, alert and stop. Else...
             // ... Disable the Interrupts.
@@ -58,6 +61,9 @@ var TSOS;
             this.krnTrace("end shutdown OS");
         }
         krnOnCPUClockPulse() {
+            if (this.isShutdown) {
+                return;
+            }
             /* This gets called from the host hardware simulation every time there is a hardware clock pulse.
                This is NOT the same as a TIMER, which causes an interrupt and is handled like other interrupts.
                This, on the other hand, is the clock pulse from the hardware / VM / host that tells the kernel
@@ -92,6 +98,9 @@ var TSOS;
             // Put more here.
         }
         krnInterruptHandler(irq, params) {
+            if (this.isShutdown) {
+                return;
+            }
             // This is the Interrupt Handler Routine.  See pages 8 and 560.
             // Trace our entrance here so we can compute Interrupt Latency by analyzing the log file later on. Page 766.
             this.krnTrace("Handling IRQ~" + irq);
@@ -154,8 +163,9 @@ var TSOS;
         }
         krnTrapError(msg) {
             TSOS.Control.hostLog("OS ERROR - TRAP: " + msg);
-            // TODO: Display error on console, perhaps in some sort of colored screen. (Maybe blue?)
             this.krnShutdown();
+            _StatusMessage = "Kernel error - reset to restart.";
+            TSOS.Control.hostShowBSOD(String(msg));
         }
     }
     TSOS.Kernel = Kernel;

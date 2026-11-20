@@ -29,6 +29,11 @@ var TSOS;
             var isShifted = params[1];
             _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
             var chr = "";
+            // Named tokens avoid confusing arrow keys with printable '&' and '('.
+            if (keyCode === 38 || keyCode === 40) {
+                _KernelInputQueue.enqueue(keyCode === 38 ? "ArrowUp" : "ArrowDown");
+                return;
+            }
             // Check to see if we even want to deal with the key that was pressed.
             if ((keyCode >= 65) && (keyCode <= 90)) { // letter
                 if (isShifted === true) {
@@ -40,11 +45,34 @@ var TSOS;
                 // TODO: Check for caps-lock and handle as shifted if so.
                 _KernelInputQueue.enqueue(chr);
             }
-            else if (((keyCode >= 48) && (keyCode <= 57)) || // digits
-                (keyCode == 32) || // space
-                (keyCode == 13)) { // enter
+            else if ((keyCode >= 48) && (keyCode <= 57)) { // digits and shifted symbols
+                const shiftedDigits = ")!@#$%^&*(";
+                chr = isShifted ? shiftedDigits.charAt(keyCode - 48) : String.fromCharCode(keyCode);
+                _KernelInputQueue.enqueue(chr);
+            }
+            else if ((keyCode === 32) || (keyCode === 13) || (keyCode === 8) || (keyCode === 9)) { // space, enter, backspace, tab
                 chr = String.fromCharCode(keyCode);
                 _KernelInputQueue.enqueue(chr);
+            }
+            else {
+                // Standard US keyboard: each pair is [normal, shifted].
+                const punctuation = {
+                    186: [";", ":"],
+                    187: ["=", "+"],
+                    188: [",", "<"],
+                    189: ["-", "_"],
+                    190: [".", ">"],
+                    191: ["/", "?"],
+                    192: ["`", "~"],
+                    219: ["[", "{"],
+                    220: ["\\", "|"],
+                    221: ["]", "}"],
+                    222: ["'", "\""]
+                };
+                const characters = punctuation[keyCode];
+                if (characters) {
+                    _KernelInputQueue.enqueue(characters[isShifted ? 1 : 0]);
+                }
             }
         }
     }
