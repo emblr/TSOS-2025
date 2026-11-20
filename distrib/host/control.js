@@ -43,6 +43,7 @@ var TSOS;
                 _GLaDOS = new Glados();
                 _GLaDOS.init();
             }
+            Control.hostUpdateTaskbar();
         }
         static hostLog(msg, source = "?") {
             // Note the OS CLOCK.
@@ -88,6 +89,16 @@ var TSOS;
         static hostBtnReset_click(btn) {
             // The easiest and most thorough way to do this is to reload (not refresh) the document.
             location.reload();
+        }
+        static hostUpdateTaskbar() {
+            const clock = document.getElementById("taskbarClock");
+            const status = document.getElementById("taskbarStatus");
+            if (clock) {
+                clock.textContent = US_FORMAT.format(new Date());
+            }
+            if (status) {
+                status.textContent = _StatusMessage;
+            }
         }
     }
     TSOS.Control = Control;

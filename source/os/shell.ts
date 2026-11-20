@@ -85,6 +85,8 @@ module TSOS {
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
+            sc = new ShellCommand(this.shellStatus, "status", "<message> - Sets the taskbar status.");
+            this.commandList[this.commandList.length] = sc;
             // Display the initial prompt.
             this.putPrompt();
         }
@@ -153,8 +155,7 @@ module TSOS {
             // 1. Remove leading and trailing spaces.
             buffer = Utils.trim(buffer);
 
-            // 2. Lower-case it.
-            buffer = buffer.toLowerCase();
+
 
             // 3. Separate on spaces so we can determine the command and command-line args, if any.
             var tempList = buffer.split(" ");
@@ -162,7 +163,7 @@ module TSOS {
             // 4. Take the first (zeroth) element and use that as the command.
             var cmd = tempList.shift();  // Yes, you can do that to an array in JavaScript. See the Queue class.
             // 4.1 Remove any left-over spaces.
-            cmd = Utils.trim(cmd);
+            cmd = Utils.trim(cmd).toLowerCase();
             // 4.2 Record it in the return value.
             retVal.command = cmd;
 
@@ -294,11 +295,19 @@ module TSOS {
         }
 
         public shellDate(args: string[]){
-            _StdOut.putText(US_FORMAT.format(NOW));
+            _StdOut.putText(US_FORMAT.format(new Date()));
         }
 
         public shellWhereAmI(args: string[]){
             _StdOut.putText(LOCATION);
+        }
+
+        public shellStatus(args: string[]): void{
+            if(args.length === 0){
+                _StdOut.putText("Usage: status <message>");
+            }else{
+                _StatusMessage = args.join(" ")
+            }
         }
     }
 }

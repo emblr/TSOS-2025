@@ -4,8 +4,9 @@
 <head>
    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
    <meta name="author" content="Alan G. Labouseur" />
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
    <link rel="stylesheet" href="tsos.css" type="text/css" media="screen" />
-   <title>TSOS - a browser-based virtual Operating System in TypeScript</title>
+   <title>StarkOS — Winterfell</title>
 
    <!-- Globals CONSTANTS and _Variables. Must included be first. -->
    <script type="text/javascript" src="distrib/globals.js"></script>
@@ -34,8 +35,76 @@
 </head>
 
 <body onload="onDocumentLoad()">
-   <div id="divMain" style="width: 100%">
-      <div id="divButtonBar" style="margin: 4px">
+   <!-- Decorative only: snow never captures console clicks or wheel events. -->
+   <div class="snowfall" aria-hidden="true">
+      <span style="--x:54.40%; --size:3.5px; --duration:21.8s; --delay:-1.6s; --drift:73.7px; --opacity:0.44"></span>
+      <span style="--x:19.32%; --size:1.9px; --duration:23.7s; --delay:-19.4s; --drift:71.2px; --opacity:0.34"></span>
+      <span style="--x:16.08%; --size:2.5px; --duration:20.4s; --delay:-7.1s; --drift:91.3px; --opacity:0.45"></span>
+      <span style="--x:95.84%; --size:2.5px; --duration:23.5s; --delay:-18.9s; --drift:37.7px; --opacity:0.51"></span>
+      <span style="--x:48.84%; --size:2.5px; --duration:21.4s; --delay:-11.0s; --drift:84.3px; --opacity:0.53"></span>
+      <span style="--x:55.06%; --size:3.7px; --duration:20.3s; --delay:-5.9s; --drift:69.0px; --opacity:0.39"></span>
+      <span style="--x:27.09%; --size:1.5px; --duration:22.1s; --delay:-3.7s; --drift:89.2px; --opacity:0.28"></span>
+      <span style="--x:89.96%; --size:3.4px; --duration:19.9s; --delay:-12.6s; --drift:46.7px; --opacity:0.49"></span>
+      <span style="--x:42.84%; --size:3.5px; --duration:18.5s; --delay:-10.0s; --drift:27.5px; --opacity:0.51"></span>
+      <span style="--x:61.47%; --size:2.1px; --duration:14.2s; --delay:-6.3s; --drift:38.8px; --opacity:0.51"></span>
+      <span style="--x:81.25%; --size:3.2px; --duration:25.8s; --delay:-10.2s; --drift:48.1px; --opacity:0.61"></span>
+      <span style="--x:74.99%; --size:3.7px; --duration:25.5s; --delay:-13.1s; --drift:54.4px; --opacity:0.51"></span>
+      <span style="--x:38.74%; --size:2.6px; --duration:25.0s; --delay:-6.6s; --drift:20.2px; --opacity:0.63"></span>
+      <span style="--x:4.17%; --size:2.9px; --duration:21.9s; --delay:-3.8s; --drift:66.4px; --opacity:0.35"></span>
+      <span style="--x:5.81%; --size:1.6px; --duration:11.2s; --delay:-2.3s; --drift:48.3px; --opacity:0.43"></span>
+      <span style="--x:6.25%; --size:2.6px; --duration:23.8s; --delay:-19.9s; --drift:22.8px; --opacity:0.42"></span>
+      <span style="--x:79.24%; --size:1.6px; --duration:18.3s; --delay:-24.0s; --drift:29.0px; --opacity:0.25"></span>
+      <span style="--x:11.17%; --size:2.7px; --duration:15.0s; --delay:-23.0s; --drift:27.8px; --opacity:0.53"></span>
+      <span style="--x:69.32%; --size:2.6px; --duration:11.9s; --delay:-2.1s; --drift:17.9px; --opacity:0.27"></span>
+      <span style="--x:23.96%; --size:2.0px; --duration:25.7s; --delay:-20.9s; --drift:48.9px; --opacity:0.54"></span>
+      <span style="--x:11.62%; --size:2.9px; --duration:21.7s; --delay:-4.2s; --drift:88.8px; --opacity:0.42"></span>
+      <span style="--x:27.40%; --size:2.8px; --duration:14.8s; --delay:-14.9s; --drift:86.9px; --opacity:0.45"></span>
+      <span style="--x:-2.10%; --size:3.6px; --duration:23.4s; --delay:-5.4s; --drift:51.7px; --opacity:0.45"></span>
+      <span style="--x:84.38%; --size:2.3px; --duration:19.9s; --delay:-1.2s; --drift:53.7px; --opacity:0.67"></span>
+      <span style="--x:74.62%; --size:1.7px; --duration:23.4s; --delay:-7.6s; --drift:38.9px; --opacity:0.66"></span>
+      <span style="--x:52.66%; --size:1.9px; --duration:23.1s; --delay:-10.2s; --drift:48.6px; --opacity:0.48"></span>
+      <span style="--x:76.36%; --size:3.4px; --duration:21.1s; --delay:-24.8s; --drift:18.8px; --opacity:0.53"></span>
+      <span style="--x:69.30%; --size:1.6px; --duration:13.4s; --delay:-4.1s; --drift:67.4px; --opacity:0.67"></span>
+      <span style="--x:5.04%; --size:3.9px; --duration:23.9s; --delay:-18.9s; --drift:69.7px; --opacity:0.28"></span>
+      <span style="--x:88.37%; --size:3.4px; --duration:18.9s; --delay:-5.6s; --drift:34.7px; --opacity:0.41"></span>
+      <span style="--x:87.09%; --size:3.5px; --duration:23.8s; --delay:-5.4s; --drift:93.8px; --opacity:0.40"></span>
+      <span style="--x:14.08%; --size:3.0px; --duration:17.9s; --delay:-21.4s; --drift:48.4px; --opacity:0.28"></span>
+      <span style="--x:75.65%; --size:3.6px; --duration:13.2s; --delay:-16.5s; --drift:74.9px; --opacity:0.64"></span>
+      <span style="--x:14.29%; --size:1.7px; --duration:20.4s; --delay:-13.3s; --drift:56.6px; --opacity:0.48"></span>
+      <span style="--x:32.67%; --size:1.5px; --duration:14.1s; --delay:-19.2s; --drift:76.8px; --opacity:0.36"></span>
+      <span style="--x:30.79%; --size:3.4px; --duration:25.5s; --delay:-0.1s; --drift:32.1px; --opacity:0.64"></span>
+      <span style="--x:63.08%; --size:3.7px; --duration:21.7s; --delay:-4.4s; --drift:95.0px; --opacity:0.63"></span>
+      <span style="--x:10.90%; --size:2.2px; --duration:11.3s; --delay:-4.6s; --drift:53.4px; --opacity:0.52"></span>
+      <span style="--x:53.16%; --size:1.8px; --duration:21.2s; --delay:-10.2s; --drift:71.3px; --opacity:0.69"></span>
+      <span style="--x:96.47%; --size:2.0px; --duration:24.5s; --delay:-18.0s; --drift:15.1px; --opacity:0.34"></span>
+      <span style="--x:8.73%; --size:2.3px; --duration:25.3s; --delay:-1.3s; --drift:47.4px; --opacity:0.31"></span>
+      <span style="--x:66.79%; --size:2.7px; --duration:21.9s; --delay:-13.4s; --drift:58.1px; --opacity:0.31"></span>
+      <span style="--x:81.00%; --size:1.9px; --duration:17.5s; --delay:-19.1s; --drift:21.6px; --opacity:0.54"></span>
+      <span style="--x:45.86%; --size:3.2px; --duration:15.7s; --delay:-8.2s; --drift:80.9px; --opacity:0.67"></span>
+      <span style="--x:77.53%; --size:1.6px; --duration:12.2s; --delay:-9.1s; --drift:25.5px; --opacity:0.40"></span>
+      <span style="--x:-0.47%; --size:3.2px; --duration:12.9s; --delay:-22.5s; --drift:31.8px; --opacity:0.59"></span>
+      <span style="--x:61.03%; --size:3.7px; --duration:13.4s; --delay:-2.2s; --drift:38.3px; --opacity:0.64"></span>
+      <span style="--x:68.97%; --size:2.5px; --duration:14.2s; --delay:-18.6s; --drift:73.2px; --opacity:0.57"></span>
+      <span style="--x:28.99%; --size:2.4px; --duration:23.3s; --delay:-25.5s; --drift:52.5px; --opacity:0.48"></span>
+      <span style="--x:59.51%; --size:2.5px; --duration:16.9s; --delay:-22.0s; --drift:36.4px; --opacity:0.43"></span>
+      <span style="--x:13.65%; --size:2.7px; --duration:25.8s; --delay:-14.3s; --drift:25.9px; --opacity:0.59"></span>
+      <span style="--x:24.77%; --size:2.9px; --duration:24.5s; --delay:-16.7s; --drift:28.8px; --opacity:0.45"></span>
+      <span style="--x:14.54%; --size:2.1px; --duration:14.2s; --delay:-11.6s; --drift:15.9px; --opacity:0.54"></span>
+      <span style="--x:89.51%; --size:3.7px; --duration:21.1s; --delay:-18.8s; --drift:60.3px; --opacity:0.41"></span>
+      <span style="--x:69.84%; --size:3.5px; --duration:15.0s; --delay:-17.5s; --drift:22.0px; --opacity:0.58"></span>
+      <span style="--x:68.34%; --size:3.6px; --duration:17.5s; --delay:-19.5s; --drift:56.5px; --opacity:0.35"></span>
+      <span style="--x:83.14%; --size:3.2px; --duration:18.5s; --delay:-8.1s; --drift:66.5px; --opacity:0.44"></span>
+      <span style="--x:54.62%; --size:3.3px; --duration:12.0s; --delay:-17.0s; --drift:79.7px; --opacity:0.64"></span>
+      <span style="--x:10.77%; --size:3.6px; --duration:23.6s; --delay:-14.6s; --drift:18.2px; --opacity:0.64"></span>
+      <span style="--x:19.79%; --size:3.5px; --duration:11.2s; --delay:-8.4s; --drift:95.9px; --opacity:0.30"></span>
+      <span style="--x:99.05%; --size:2.3px; --duration:19.3s; --delay:-5.6s; --drift:43.7px; --opacity:0.53"></span>
+      <span style="--x:78.02%; --size:3.5px; --duration:16.1s; --delay:-9.5s; --drift:93.3px; --opacity:0.37"></span>
+      <span style="--x:96.23%; --size:3.5px; --duration:18.0s; --delay:-17.4s; --drift:40.0px; --opacity:0.52"></span>
+      <span style="--x:95.19%; --size:2.3px; --duration:14.3s; --delay:-9.4s; --drift:94.0px; --opacity:0.49"></span>
+   </div>
+   <h1>StarkOS</h1>
+   <div id="divMain">
+      <div id="divButtonBar">
          <input type="button" id="btnStartOS" name="brnStartOS" class="normal_button" value="Start" tabindex="0"
             onclick="TSOS.Control.hostBtnStartOS_click(this)" />
 
@@ -46,29 +115,41 @@
             tabindex="2" onclick="TSOS.Control.hostBtnReset_click(this)" />
       </div>
 
-      <div id="divConsole" style="margin: 4px; width: 500px; height: 500px; float: left">
-         <canvas id="display" width="500px" height="500px" tabindex="3">
+      <div id="divConsole">
+         <canvas id="display" width="500" height="500" tabindex="3">
          </canvas>
       </div>
 
-      <div id="divLog" style="margin-left: 520px">
+      <div id="divLog">
          <label>
             Host Log
             <br />
-            <textarea name="taHostLog" id="taHostLog" rows="26" cols="48"></textarea>
+            <textarea name="taHostLog" id="taHostLog" rows="22" cols="48" spellcheck="false"></textarea>
          </label>
       </div>
 
-      <div id="divUserProgramInput" style="margin-left: 520px">
+      <div id="divUserProgramInput">
          <label>
             User Program Input
             <br />
-            <textarea name="taProgramInput" id="taProgramInput" rows="8" cols="48"></textarea>
+            <textarea name="taProgramInput" id="taProgramInput" rows="8" cols="48" spellcheck="false"></textarea>
          </label>
+      </div>
+
+   </div>
+
+   <div id="taskbar" aria-label="System status and local time">
+      <div class="taskbar-item status-corner">
+         <span class="taskbar-label">Status</span>
+         <span id="taskbarStatus">Winter is Coming</span>
+      </div>
+      <div class="taskbar-item clock-corner">
+         <span class="taskbar-label">Local date &amp; time</span>
+         <span id="taskbarClock"></span>
       </div>
    </div>
 
-   <p class="footerText" style="clear: both">
+   <p class="footerText">
       <br />
       Copyright &copy; 2008 - 2112 No Rights Reserved.
       <br />

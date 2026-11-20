@@ -50,6 +50,8 @@ module TSOS {
                 _GLaDOS = new Glados();
                 _GLaDOS.init();
             }
+
+            Control.hostUpdateTaskbar();
         }
 
         public static hostLog(msg: string, source: string = "?"): void {
@@ -109,5 +111,17 @@ module TSOS {
             // The easiest and most thorough way to do this is to reload (not refresh) the document.
             location.reload();
         }
+
+        public static hostUpdateTaskbar(): void{
+            const clock = document.getElementById("taskbarClock");
+            const status = document.getElementById("taskbarStatus");
+            if (clock){
+                clock.textContent = US_FORMAT.format(new Date());
+            }
+            if(status){
+                status.textContent = _StatusMessage;
+            }
+        }
     }
+
 }
