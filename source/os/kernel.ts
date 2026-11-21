@@ -11,6 +11,8 @@ module TSOS {
 
     export class Kernel {
         public isShutdown: boolean = false;
+        public singleStep: boolean = false;
+        private pendingSteps: number = 0;
         //
         // OS Startup and Shutdown Routines
         //
@@ -58,7 +60,12 @@ module TSOS {
 
         public krnShutdown() {
             this.isShutdown = true;
+            this.pendingSteps = 0;
             _CPU.isExecuting = false;
+            if (_MemoryManager.currentProcess && _MemoryManager.currentProcess.state === "running") {
+                _CPU.saveState(_MemoryManager.currentProcess);
+                _MemoryManager.currentProcess.state = "terminated";
+            }
             this.krnTrace("begin shutdown OS");
             // TODO: Check for running processes.  If there are some, alert and stop. Else...
             // ... Disable the Interrupts.
@@ -89,6 +96,12 @@ module TSOS {
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
+                if (this.singleStep) {
+                    if (this.pendingSteps === 0) {
+                        return;
+                    }
+                    this.pendingSteps--;
+                }
                 _CPU.cycle();
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
@@ -135,9 +148,99 @@ module TSOS {
                 case SCROLL_IRQ:
                     _StdOut.scroll(params);
                     break;
+                case SYSCALL_IRQ:
+                    this.krnSystemCall(params[0], params[1], params[2]);
+                    break;
+                case PROCESS_EXIT_IRQ:
+                    this.krnTerminateProcess(params[0], params[1]);
+                    break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
             }
+        }
+
+        public krnSetSingleStep(enabled: boolean): void {
+            if (this.isShutdown) {
+                return;
+            }
+            this.singleStep = enabled;
+            this.pendingSteps = 0;
+            this.krnTrace("Single step " + (enabled ? "enabled" : "disabled"));
+        }
+
+        public krnRequestStep(): void {
+            if (!this.isShutdown && this.singleStep && _CPU.isExecuting) {
+                this.pendingSteps++;
+            }
+        }
+
+        public krnRunProgram(pid: number): void {
+            const process = _MemoryManager.currentProcess;
+            if (!process || process.pid !== pid) {
+                throw new Error("PID " + pid + " is not loaded in memory.");
+            }
+            if (process.state !== "loaded") {
+                throw new Error("Process is " + process.state + ". Load a program before running it.");
+            }
+            _CPU.init();
+            this.pendingSteps = 0;
+            process.state = "running";
+            _CPU.saveState(process);
+            _CPU.isExecuting = true;
+            this.krnTrace("Running PID " + pid);
+        }
+
+        public krnSystemCall(pid: number, operation: number, value: number): void {
+            const process = _MemoryManager.currentProcess;
+            if (!process || process.pid !== pid || process.state !== "running") {
+                return;
+            }
+            if (operation === 1) {
+                _StdOut.putText(String(value));
+            } else if (operation === 2) {
+                let text = "";
+                try {
+                    // A missing terminator faults at the memory boundary instead of hanging.
+                    for (let address = value; ; address++) {
+                        const byte = _MemoryAccessor.read(address);
+                        if (byte === 0) {
+                            break;
+                        }
+                        text += String.fromCharCode(byte);
+                    }
+                    for (const character of text) {
+                        if (character === "\n") {
+                            _StdOut.advanceLine();
+                        } else {
+                            _StdOut.putText(character);
+                        }
+                    }
+                } catch (error) {
+                    this.krnTerminateProcess(pid, "String is not terminated within memory.");
+                }
+            } else {
+                this.krnTerminateProcess(pid, "Unknown system call X=" + operation + ".");
+            }
+        }
+
+        public krnTerminateProcess(pid: number, reason: string = ""): void {
+            const process = _MemoryManager.currentProcess;
+            if (!process || process.pid !== pid || process.state !== "running") {
+                return;
+            }
+            _CPU.isExecuting = false;
+            _CPU.saveState(process);
+            process.state = "terminated";
+            this.pendingSteps = 0;
+            if (_StdOut.currentXPosition > 0) {
+                _StdOut.advanceLine();
+            }
+            if (reason !== "") {
+                _StdOut.putText("PID " + pid + ": " + reason);
+                _StdOut.advanceLine();
+            }
+            this.krnTrace("Terminated PID " + pid + (reason ? ": " + reason : ""));
+            _OsShell.putPrompt();
         }
 
         public krnTimerISR() {

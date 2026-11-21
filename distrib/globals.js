@@ -18,6 +18,8 @@ const TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt pri
 // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ = 1;
 const SCROLL_IRQ = 2;
+const SYSCALL_IRQ = 3;
+const PROCESS_EXIT_IRQ = 4;
 const US_FORMAT = new Intl.DateTimeFormat("en-US", {
     year: 'numeric',
     month: 'long',

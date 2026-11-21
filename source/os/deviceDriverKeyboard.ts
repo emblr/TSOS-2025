@@ -33,6 +33,10 @@ module TSOS {
             var isShifted = params[1];
             _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
             var chr = "";
+            if (params[2] && keyCode === 67) {
+                _KernelInputQueue.enqueue("CtrlC");
+                return;
+            }
             // Named tokens avoid confusing arrow keys with printable '&' and '('.
             if (keyCode === 38 || keyCode === 40) {
                 _KernelInputQueue.enqueue(keyCode === 38 ? "ArrowUp" : "ArrowDown");

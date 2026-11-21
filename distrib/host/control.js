@@ -44,6 +44,7 @@ var TSOS;
                 _GLaDOS.init();
             }
             Control.hostUpdateTaskbar();
+            TSOS.Diagnostics.init();
         }
         static hostLog(msg, source = "?") {
             // Note the OS CLOCK.
@@ -80,6 +81,7 @@ var TSOS;
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new TSOS.Kernel();
             _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
+            TSOS.Diagnostics.update();
         }
         static hostBtnHaltOS_click(btn) {
             Control.hostLog("Emergency halt", "host");
@@ -88,11 +90,37 @@ var TSOS;
             _Kernel.krnShutdown();
             // Stop the interval that's simulating our clock pulse.
             clearInterval(_hardwareClockID);
+            TSOS.Diagnostics.update();
             // TODO: Is there anything else we need to do here?
         }
         static hostBtnReset_click(btn) {
             // The easiest and most thorough way to do this is to reload (not refresh) the document.
             location.reload();
+        }
+        static hostToggleSingleStep(input) {
+            if (_Kernel) {
+                _Kernel.krnSetSingleStep(input.checked);
+                TSOS.Diagnostics.update();
+                _Canvas.focus();
+            }
+        }
+        static hostStep_click() {
+            if (_Kernel) {
+                _Kernel.krnRequestStep();
+                _Canvas.focus();
+            }
+        }
+        static hostUpdateStepControls() {
+            const toggle = document.getElementById("singleStep");
+            const step = document.getElementById("btnStep");
+            const active = Boolean(_Kernel && !_Kernel.isShutdown);
+            if (toggle) {
+                toggle.disabled = !active;
+                toggle.checked = Boolean(_Kernel && _Kernel.singleStep);
+            }
+            if (step) {
+                step.disabled = !active || !_Kernel.singleStep || !_CPU.isExecuting;
+            }
         }
         static hostReadProgramInput() {
             return document.getElementById("taProgramInput").value;

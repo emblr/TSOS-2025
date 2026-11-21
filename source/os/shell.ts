@@ -89,6 +89,7 @@ module TSOS {
             this.commandList[this.commandList.length] = sc;
 
             this.commandList.push(new ShellCommand(this.shellLoad, "load", "- Loads hex program input into memory and returns a PID."));
+            this.commandList.push(new ShellCommand(this.shellRun, "run", "<pid> - Executes the loaded program."));
             this.commandList.push(new ShellCommand(this.shellBSOD, "bsod", "- Triggers a kernel error to test the blue screen."));
             this.commandList.push(new ShellCommand(this.shellDirewolf, "direwolf", "[name] - Calls a direwolf to guard Winterfell."));
             // Display the initial prompt.
@@ -107,7 +108,7 @@ module TSOS {
         }
 
         public handleInput(buffer) {
-            if (_Kernel.isShutdown) {
+            if (_Kernel.isShutdown || (_MemoryManager.currentProcess && _MemoryManager.currentProcess.state === "running")) {
                 return;
             }
             _Kernel.krnTrace("Shell Command~" + buffer);
@@ -156,7 +157,7 @@ module TSOS {
             // ... call the command function passing in the args with some über-cool functional programming ...
             fn(args);
             // A shutdown or kernel trap must not print over the final screen.
-            if (_Kernel.isShutdown) {
+            if (_Kernel.isShutdown || (_MemoryManager.currentProcess && _MemoryManager.currentProcess.state === "running")) {
                 return;
             }
             // Check to see if we need to advance the line again
@@ -353,6 +354,18 @@ module TSOS {
                 } catch (error) {
                     _StdOut.putText(error instanceof Error ? error.message : "Unable to load program.");
                 }
+            }
+        }
+
+        public shellRun(args: string[]): void {
+            if (args.length !== 1 || !/^\d+$/.test(args[0]) || !Number.isSafeInteger(Number(args[0]))) {
+                _StdOut.putText("Usage: run <pid> (PID must be a nonnegative integer)");
+                return;
+            }
+            try {
+                _Kernel.krnRunProgram(Number(args[0]));
+            } catch (error) {
+                _StdOut.putText(error instanceof Error ? error.message : "Unable to run program.");
             }
         }
 

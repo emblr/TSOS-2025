@@ -52,6 +52,26 @@ var TSOS;
             while (_KernelInputQueue.getSize() > 0) {
                 // Get the next character from the kernel input queue.
                 var chr = _KernelInputQueue.dequeue();
+                // Handle cancellation even while a program owns console output.
+                if (chr === "CtrlC") {
+                    this.buffer = "";
+                    this.inputDraft = "";
+                    this.historyIndex = this.commandHistory.length;
+                    const process = _MemoryManager.currentProcess;
+                    if (process && process.state === "running") {
+                        _Kernel.krnTerminateProcess(process.pid, "Interrupted by Ctrl-C.");
+                    }
+                    else {
+                        this.putText("^C");
+                        this.advanceLine();
+                        _OsShell.putPrompt();
+                    }
+                    continue;
+                }
+                // The running program owns stdout until it terminates.
+                if (_MemoryManager.currentProcess && _MemoryManager.currentProcess.state === "running") {
+                    continue;
+                }
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
                 if (chr === String.fromCharCode(13)) { // the Enter key
                     if (this.buffer.trim() !== "") {
@@ -87,7 +107,6 @@ var TSOS;
                     // ... and add it to our buffer.
                     this.buffer += chr;
                 }
-                // TODO: Add a case for Ctrl-C that would allow the user to break the current program.
             }
         }
         recallCommand(direction) {
@@ -114,7 +133,6 @@ var TSOS;
             // Preserve the existing prompt, including a customized prompt string.
             this.currentLine = this.currentLine.slice(0, this.currentLine.length - this.buffer.length) + text;
             this.buffer = text;
-            this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.currentLine);
             this.scrollOffset = 0;
             let lineHeight = this.currentFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
             this.currentYPosition = this.redrawHistoryWindow(0, lineHeight);
@@ -150,21 +168,41 @@ var TSOS;
                 decided to write one function and use the term "text" to connote string or char.
             */
             if (text !== "") {
-                if (this.scrollOffset !== 0) {
-                    let lineHeight = this.currentFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
-                    this.scrollOffset = 0;
-                    this.currentYPosition = this.redrawHistoryWindow(0, lineHeight);
+                // Keep logical lines intact so wrapping never changes shell input.
+                const lines = text.split("\n");
+                for (let i = 0; i < lines.length; i++) {
+                    if (i > 0) {
+                        this.advanceLine();
+                    }
+                    this.currentLine += lines[i];
                 }
-                // Draw the text at the current X and Y coordinates.
-                _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
-                let offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-                this.currentLine += text;
-                this.currentXPosition = this.currentXPosition + offset;
+                this.scrollOffset = 0;
+                const lineHeight = this.currentFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
+                this.currentYPosition = this.redrawHistoryWindow(0, lineHeight);
             }
         }
+        displayRows() {
+            const rows = [];
+            for (const line of this.history.concat([this.currentLine])) {
+                let row = "";
+                let width = 0;
+                for (const character of line) {
+                    const characterWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, character);
+                    if (row !== "" && width + characterWidth > _Canvas.width) {
+                        rows.push(row);
+                        row = "";
+                        width = 0;
+                    }
+                    row += character;
+                    width += characterWidth;
+                }
+                rows.push(row);
+            }
+            return rows;
+        }
         redrawHistoryWindow(scrollOffset, offset) {
-            // Include the unfinished prompt/input without committing it to history.
-            let allLines = this.history.concat([this.currentLine]);
+            // Scrolling counts rendered rows, including wrapped portions of a line.
+            let allLines = this.displayRows();
             this.clearCanvasPixels();
             let linesPerScreen = Math.max(1, Math.floor(_Canvas.height / offset));
             let bottomTop = Math.max(0, allLines.length - linesPerScreen) * offset;
@@ -176,8 +214,11 @@ var TSOS;
                 let rowY = this.currentFontSize + i * offset - viewportTop;
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, 0, rowY, allLines[i]);
             }
+            if (scrollOffset === 0) {
+                this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, allLines[allLines.length - 1]);
+            }
             // At the bottom, this is the baseline of the current input line.
-            return this.currentFontSize + this.history.length * offset - viewportTop;
+            return this.currentFontSize + (allLines.length - 1) * offset - viewportTop;
         }
         advanceLine() {
             this.history.push(this.currentLine);
@@ -189,15 +230,8 @@ var TSOS;
              * Font height margin is extra spacing between the lines.
              */
             let offset = this.currentFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
-            let nextYPosition = this.currentYPosition + offset;
-            let linesPerScreen = Math.max(1, Math.floor(_Canvas.height / offset));
-            if (this.scrollOffset !== 0 || this.history.length + 1 > linesPerScreen) {
-                this.scrollOffset = 0;
-                this.currentYPosition = this.redrawHistoryWindow(0, offset);
-            }
-            else {
-                this.currentYPosition = nextYPosition;
-            }
+            this.scrollOffset = 0;
+            this.currentYPosition = this.redrawHistoryWindow(0, offset);
         }
         scroll(params) {
             let deltaY = params[0];
@@ -214,7 +248,7 @@ var TSOS;
             else if (deltaMode === 2) {
                 deltaY *= linesPerScreen * offset;
             }
-            let maxOffset = Math.max(0, this.history.length + 1 - linesPerScreen) * offset;
+            let maxOffset = Math.max(0, this.displayRows().length - linesPerScreen) * offset;
             let nextOffset = Math.max(0, Math.min(maxOffset, this.scrollOffset - deltaY));
             if (nextOffset === this.scrollOffset) {
                 return;

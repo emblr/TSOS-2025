@@ -16,6 +16,11 @@ namespace TSOS {
             return this.MAR;
         }
 
+        public snapshot(): number[] {
+            // Viewing memory must not change MAR/MDR or expose the backing array.
+            return Array.from(this.bytes);
+        }
+
         public getMDR(): number {
             return this.MDR;
         }

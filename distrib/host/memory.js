@@ -15,6 +15,10 @@ var TSOS;
         getMAR() {
             return this.MAR;
         }
+        snapshot() {
+            // Viewing memory must not change MAR/MDR or expose the backing array.
+            return Array.from(this.bytes);
+        }
         getMDR() {
             return this.MDR;
         }

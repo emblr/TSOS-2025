@@ -52,6 +52,7 @@ module TSOS {
             }
 
             Control.hostUpdateTaskbar();
+            Diagnostics.init();
         }
 
         public static hostLog(msg: string, source: string = "?"): void {
@@ -100,6 +101,7 @@ module TSOS {
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new Kernel();
             _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
+            Diagnostics.update();
         }
 
         public static hostBtnHaltOS_click(btn): void {
@@ -109,12 +111,41 @@ module TSOS {
             _Kernel.krnShutdown();
             // Stop the interval that's simulating our clock pulse.
             clearInterval(_hardwareClockID);
+            Diagnostics.update();
             // TODO: Is there anything else we need to do here?
         }
 
         public static hostBtnReset_click(btn): void {
             // The easiest and most thorough way to do this is to reload (not refresh) the document.
             location.reload();
+        }
+
+        public static hostToggleSingleStep(input: HTMLInputElement): void {
+            if (_Kernel) {
+                _Kernel.krnSetSingleStep(input.checked);
+                Diagnostics.update();
+                _Canvas.focus();
+            }
+        }
+
+        public static hostStep_click(): void {
+            if (_Kernel) {
+                _Kernel.krnRequestStep();
+                _Canvas.focus();
+            }
+        }
+
+        public static hostUpdateStepControls(): void {
+            const toggle = <HTMLInputElement | null>document.getElementById("singleStep");
+            const step = <HTMLButtonElement | null>document.getElementById("btnStep");
+            const active = Boolean(_Kernel && !_Kernel.isShutdown);
+            if (toggle) {
+                toggle.disabled = !active;
+                toggle.checked = Boolean(_Kernel && _Kernel.singleStep);
+            }
+            if (step) {
+                step.disabled = !active || !_Kernel.singleStep || !_CPU.isExecuting;
+            }
         }
 
         public static hostReadProgramInput(): string {

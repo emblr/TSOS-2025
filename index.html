@@ -14,6 +14,7 @@
    <!-- Host (Virtual Machine / Hardware Simulation) Routines -->
    <script type="text/javascript" src="distrib/host/memory.js"></script>
    <script type="text/javascript" src="distrib/host/memoryAccessor.js"></script>
+   <script type="text/javascript" src="distrib/host/diagnostics.js"></script>
    <script type="text/javascript" src="distrib/host/control.js"></script>
    <script type="text/javascript" src="distrib/host/devices.js"></script>
    <script type="text/javascript" src="distrib/host/cpu.js"></script>
@@ -106,6 +107,17 @@
       <span style="--x:96.23%; --size:3.5px; --duration:18.0s; --delay:-17.4s; --drift:40.0px; --opacity:0.52"></span>
       <span style="--x:95.19%; --size:2.3px; --duration:14.3s; --delay:-9.4s; --drift:94.0px; --opacity:0.49"></span>
    </div>
+   <div id="taskbar" aria-label="System status and local time">
+      <div class="taskbar-item status-corner">
+         <span class="taskbar-label">Status</span>
+         <span id="taskbarStatus">Winter is Coming</span>
+      </div>
+      <div class="taskbar-item clock-corner">
+         <span class="taskbar-label">Local date &amp; time</span>
+         <span id="taskbarClock"></span>
+      </div>
+   </div>
+
    <h1>StarkOS</h1>
    <div id="divMain">
       <div id="divButtonBar">
@@ -117,6 +129,7 @@
 
          <input type="button" id="btnReset" name="brnReset" class="normal_button" disabled="disabled" value="Reset"
             tabindex="2" onclick="TSOS.Control.hostBtnReset_click(this)" />
+
       </div>
 
       <div id="divConsole">
@@ -142,16 +155,42 @@
 
    </div>
 
-   <div id="taskbar" aria-label="System status and local time">
-      <div class="taskbar-item status-corner">
-         <span class="taskbar-label">Status</span>
-         <span id="taskbarStatus">Winter is Coming</span>
-      </div>
-      <div class="taskbar-item clock-corner">
-         <span class="taskbar-label">Local date &amp; time</span>
-         <span id="taskbarClock"></span>
-      </div>
-   </div>
+   <section id="diagnostics" aria-label="Live hardware and process state">
+      <section class="diagnostic-panel" aria-labelledby="cpu-title">
+         <h2 id="cpu-title">CPU</h2>
+         <div class="table-viewport" tabindex="0" role="region" aria-label="CPU registers">
+            <table><thead><tr><th scope="col">PC</th><th scope="col">IR</th><th scope="col">Acc</th><th scope="col">X</th><th scope="col">Y</th><th scope="col">Z</th><th scope="col">State</th></tr></thead><tbody id="cpuState"></tbody></table>
+         </div>
+      </section>
+      <section class="diagnostic-panel" aria-labelledby="pcb-title">
+         <h2 id="pcb-title">Process control block</h2>
+         <div class="table-viewport" tabindex="0" role="region" aria-label="Current process state">
+            <table><thead><tr><th scope="col">PID</th><th scope="col">State</th><th scope="col">PC</th><th scope="col">IR</th><th scope="col">Acc</th><th scope="col">X</th><th scope="col">Y</th><th scope="col">Z</th></tr></thead><tbody id="pcbState"></tbody></table>
+         </div>
+      </section>
+      <section class="diagnostic-panel memory-panel" aria-labelledby="memory-title">
+         <div class="memory-heading">
+            <div class="memory-description">
+               <h2 id="memory-title">Memory</h2>
+               <p class="memory-subtitle">256 bytes · values and addresses in hex</p>
+            </div>
+            <div class="memory-controls" role="group" aria-label="Execution controls">
+               <label class="step-toggle">
+                  <input type="checkbox" id="singleStep" disabled onchange="TSOS.Control.hostToggleSingleStep(this)" />
+                  Single Step
+               </label>
+               <button type="button" id="btnStep" class="normal_button" disabled
+                  onclick="TSOS.Control.hostStep_click()">Step</button>
+            </div>
+         </div>
+         <p class="memory-key"><span>Outlined: next instruction</span><span>Shaded: byte changed this tick</span></p>
+         <div class="table-viewport" tabindex="0" role="region" aria-label="Memory addresses 0000 through 00FF">
+            <table class="memory-table"><thead><tr><th scope="col">Address</th><th scope="col">0</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">A</th><th scope="col">B</th><th scope="col">C</th><th scope="col">D</th><th scope="col">E</th><th scope="col">F</th></tr></thead><tbody id="memoryState"></tbody></table>
+         </div>
+      </section>
+   </section>
+
+
 
    <p class="footerText">
       <br />
